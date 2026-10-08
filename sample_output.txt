@@ -1,0 +1,40 @@
+AUTOMATED MUTATION-BASED COMPILER CODE OPTIMIZATION
+Stage 1 - backend prototype
+
+Original TAC
+  t1 = a + 0
+  t2 = b * 1
+  t3 = 10 + 20
+  t4 = t1 + t2
+  result = t4 + t3
+
+Candidate search (one round, up to two mutations per candidate)
+ID   Cost     Check   Mutations
+1    17.80    PASS    Constant folding
+2    17.80    PASS    Zero-add removal
+3    17.80    PASS    One-mul removal
+4    15.80    PASS    Constant folding + Zero-add removal
+5    15.80    PASS    Constant folding + One-mul removal
+6    15.80    PASS    Zero-add removal + One-mul removal
+
+Best TAC found
+  t1 = a
+  t2 = b * 1
+  t3 = 30
+  t4 = t1 + t2
+  result = t4 + t3
+
+Metric             Original   Selected
+instructions       5          5
+arithmetic         5          3
+temporaries        4          4
+cost               19.8       15.8
+Static cost reduction: 20.20%
+Validation: 25 input cases per candidate (not a formal proof).
+
+Example execution
+Inputs:    {'a': 3, 'b': 4}
+Original:  {'result': 37}
+Selected:  {'result': 37}
+
+Pending: 4+ more operators, iterative search, runtime scoring, 200-500 program benchmark.
