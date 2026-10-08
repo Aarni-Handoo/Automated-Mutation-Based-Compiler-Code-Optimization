@@ -1,75 +1,115 @@
-# Automated Mutation-Based Compiler Code Optimization
+# **Automated Mutation-Based Compiler Code Optimization**
 
-Stage 1 backend prototype. This is roughly the first half of the planned project,
-not the finished optimizer. There is no frontend or web server in this version.
+## A backend project that explores alternative versions of three-address code (TAC), checks their outputs, and selects a lower-cost candidate. The goal is to optimize a program by generating and evaluating different versions of it. Each version is created using small code transformations called mutations.
+For example:
 
-## Run in VS Code
+t1 = a + 0       becomes       t1 = a
 
-1. Extract the ZIP and open the `mutation_optimizer` folder in VS Code.
-2. Open Terminal > New Terminal.
-3. Run `python main.py` (on Windows, `py main.py` also works).
-4. Edit `examples/demo.tac`, save it, and run again.
+t2 = b * 1       becomes       t2 = b
 
-Python 3.10 or newer is required. No external packages are needed.
+t3 = 10 + 20     becomes       t3 = 30
 
-Other commands:
+The system compares the candidates against the original program on test inputs, scores them, and selects the lowest-cost candidate that passes those checks. The original is retained if no candidate improves its cost.
+This project operates on a small TAC language. It is not a complete compiler for C, C++, or Python.
+### How It Works
+1. Parse: Convert the input TAC into instruction objects.
+2. Generate: Apply individual mutation operators and ordered pairs of operators.
+3. Filter: Skip unchanged and duplicate candidates.
+4. Validate: Compare original and candidate outputs on a fixed set of test inputs.
+5. Score: Calculate a weighted static cost for each candidate.
+6. Select: Return the lowest-cost passing candidate found in the search. 
+7. Display: Print the candidate table, selected TAC, cost comparison, and example outputs.
+The current version performs one search round with at most two operator applications per candidate. Repeated search across generations is a future task.
+Task Breakdown and Progress
 
-```sh
-python main.py examples/strength.tac
-python main.py path/to/your_program.tac
-python -m unittest -v
+Task 1: TAC Representation and Execution
+- [x] Define an instruction representation.
+- [x] Parse assignments and integer arithmetic using +, -, and *.
+- [x] Support optional trailing semicolons and comments.
+- [x] Identify input variables and observable output variables.
+- [x] Execute supported TAC with a small interpreter.
+- [x] Reject unsupported syntax with an error message.
+- [ ] Extend the language to support additional operations.
+- [ ] Add control-flow support and analysis for branches and loops.
+Task 2: Mutation Operators
+Four operators are implemented. The target is at least eight.
+- [x] Constant folding: t1 = 10 + 20 → t1 = 30.
+- [x] Zero-add removal: t1 = a + 0 → t1 = a.
+- [x] One-mul removal: t1 = b * 1 → t1 = b.
+- [x] Strength reduction: t1 = x * 2 → t1 = x + x.
+- [ ] Constant propagation: Substitute known constant values safely.
+- [ ] Copy propagation: Replace copied variables where reassignment permits it.
+- [ ] Common subexpression elimination: Reuse available expression results.
+- [ ] Dead-code elimination: Remove temporary calculations that are not needed.
+- [ ] Safe instruction reordering: Reorder independent instructions.
+Task 3: Candidate Search and Selection
+- [x] Generate candidates using single mutations and ordered pairs.
+- [x] Remove duplicate candidate programs.
+- [x] Compare passing candidates by cost.
+- [x] Keep the original when no candidate has a lower cost.
+- [ ] Extend the search across multiple iterations.
+- [ ] Add configurable pool size, iteration limits, and search strategy.
+- [ ] Track exploration depth and candidate history across iterations.
+Task 4: Correctness Checking
+- [x] Compare observable outputs of original and candidate programs.
+- [x] Check each distinct candidate against 25 input cases.
+- [x] Use five fixed-value cases and 20 seeded random cases.
+- [x] Include unit tests for independent demo inputs, reassignment, negative numbers, output naming, strength reduction, and unsupported syntax.
+- [ ] Add a separate final-validation input set to the optimizer.
+- [ ] Expand automated tests as new operators are implemented.
+- [ ] Add branch-sensitive checks when control flow is supported.
+Note: Passing a finite set of inputs is evidence of correctness, not a formal proof of equivalence.
+Task 5: Cost Evaluation
+- [x] Count instructions.
+- [x] Count arithmetic operations.
+- [x] Count distinct temporary variables assigned by the program.
+- [x] Calculate static weighted cost and percentage reduction.
+- [ ] Measure original and candidate execution times under comparable conditions.
+- [ ] Add execution time to the cost function.
+- [ ] Make weights configurable from the command line.
+Task 6: Benchmarking and Results
+- [x] Provide runnable demonstration programs.
+- [x] Include captured terminal output from the default example.
+- [ ] Build a diverse benchmark set of 200–500 programs.
+- [ ] Define and report correctness rate and validity rate.
+- [ ] Report exploration depth and aggregate cost reduction.
+- [ ] Export benchmark results to CSV or JSON.
+- [ ] Analyse results and document limitations.
+Task 7: Demonstration and Documentation
+- [x] Provide a command-line entry point for VS Code demonstrations.
+- [x] Display candidate costs and validation results.
+- [x] Display original and selected TAC.
+- [x] Show matching outputs for an example input.
+- [x] Document setup, input syntax, and remaining work.
+- [ ] Add a minimal frontend after the backend is complete, if required.
+- [ ] Prepare the final project report using measured benchmark results.
+
+### Current Cost Function
+
+```text
+Cost = instruction_count
+     + 2 × arithmetic_operation_count
+     + 1.2 × temporary_variable_count
 ```
 
-`sample_output.txt` contains actual output captured from the default demo.
+This is a static cost score, not an execution-time measurement. A lower score does not establish a real runtime speedup.
 
-## What is implemented
+The planned full cost function is:
 
-- Parser and interpreter for straight-line integer TAC: assignments, +, -, *.
-- Four mutations: constant folding, zero-add removal, one-mul removal,
-  and strength reduction (x * 2 becomes x + x).
-- One candidate-search round using single operators and ordered pairs.
-- Duplicate candidates are skipped. Lowest-cost passing candidate wins;
-  the original is kept if none improves it.
-- Candidate checks using 5 boundary-style cases and 20 seeded random cases.
-- Terminal output showing candidates, costs, selected TAC, and example execution.
+```text
+Cost = w1 × instruction_count
+     + w2 × arithmetic_operation_count
+     + w3 × temporary_variable_count
+     + w4 × execution_time
+```
 
-## Current cost
+### Project Structure
 
-`cost = instructions + 2 * arithmetic_operations + 1.2 * temporary_count`
-
-This is a static score, not a runtime or speedup measurement. Execution time is
-not part of this stage. Addition and multiplication have equal weights, so
-strength reduction alone ties the original cost and is not selected on a tie.
-An instruction-count reduction is not expected from the current four operators.
-
-## Input rules
-
-One assignment per line; semicolons are optional. Operands are integer literals
-or variable names. `#` and `//` comments are allowed. Values read before assignment
-are inputs. All assigned names except `t` followed by digits are observable outputs.
-`t1`, `t2`, etc. are reserved temporaries. `total` is a normal output name.
-Include at least one named output, e.g. `result = t4`.
-
-This stage deliberately rejects declarations, branches, loops, division,
-floats, nested expressions, C source, and print statements.
-
-## Next stage
-
-- Implement at least four additional operators with reassignment safety:
-  constant propagation, copy propagation, common subexpression elimination,
-  and dead-code elimination.
-- Repeat candidate generation across iterations and track exploration depth.
-- Add fair execution-time measurements for original and candidate programs.
-- Add independent validation and broader edge-case tests.
-- Evaluate 200-500 programs; record correctness/validity rates and cost reduction.
-- Add a basic interface only after the backend is ready.
-
-## Demonstration order
-
-Open `examples/demo.tac`, then run `python main.py`. Point out the candidate table,
-the lower static cost, and matching example outputs. Show `mutate()` for the four
-transformations and `optimize()` for selection. State that search is currently
-one round and runtime measurement/large benchmarks are still pending.
-
-Passing the finite input checks is not a proof of equivalence. No final benchmark
-claims or completion percentage measurements are included.
+- optimizer.py — Parser, interpreter, mutations, validation, and search
+- main.py — Terminal demonstration
+- test_optimizer.py — Backend unit tests
+- requirements.txt — Python requirements
+- README.md — Project documentation
+- sample_output.txt — Captured demo output
+- examples/demo.tac — Main optimization example
+- examples/strength.tac — Strength-reduction example
