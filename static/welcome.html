@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07110f"><title>Mutation Lab — Initialize</title>
+<link rel="stylesheet" href="/welcome.css"><script src="/welcome.js" defer></script>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<main class="intro-shell">
+<header class="topline">
+<a class="brand" href="/" aria-label="Mutation Lab home"><span class="brand-mark">M</span><span><strong>MUTATION LAB</strong><small>PYTHON + TAC OPTIMIZATION</small></span></a>
+<div class="system-state"><span class="pulse-dot"></span> LOCAL ENGINE <span id="engineState">INITIALIZING</span></div>
+</header>
+<section class="hero">
+<div class="hero-copy">
+<p class="eyebrow"><span class="eyebrow-line"></span> AUTOMATED MUTATION-BASED OPTIMIZATION</p>
+<h1>Make your code<br><span>evolve.</span></h1>
+<p class="lede">Explore mutations. Remove redundant operations. Find a better version of your code.</p>
+<div class="hero-actions"><a class="launch-button" id="launchButton" href="/dashboard">Enter Mutation Lab <span>↗</span></a><button class="skip-button" id="skipButton" type="button">Skip animation</button></div>
+<p class="hint"><span class="keycap">↵</span> Press Enter to launch workspace</p>
+</div>
+<div class="mutation-window" aria-label="Animated code mutation preview">
+<div class="window-bar"><div class="window-dots"><i></i><i></i><i></i></div><span>mutation_preview.py</span><span class="window-tag">LIVE PREVIEW</span></div>
+<div class="code-area">
+<div class="code-label"><span>INPUT</span><span class="line-note">redundant operations detected</span></div>
+<div class="code-line"><span class="ln">01</span><code><span class="kw">def</span> <span class="fn">calculate</span>(a, b):</code></div>
+<div class="code-line"><span class="ln">02</span><code>    x = a <span class="mutating" id="addZero">+ 0</span></code></div>
+<div class="code-line"><span class="ln">03</span><code>    y = b <span class="mutating" id="mulOne">* 1</span></code></div>
+<div class="code-line"><span class="ln">04</span><code>    <span class="kw">return</span> x + y</code></div>
+<div class="scan-line"></div><div class="mutation-status" id="mutationStatus"><span class="spinner"></span> Scanning mutation operators…</div>
+<div class="divider"><span>TRANSFORMATION</span><span class="divider-line"></span></div>
+<div class="code-label output-label"><span>OPTIMIZED PREVIEW</span><span class="verified" id="verifiedBadge">WAITING</span></div>
+<div class="code-line output-line"><span class="ln">01</span><code><span class="kw">def</span> <span class="fn">calculate</span>(a, b):</code></div>
+<div class="code-line output-line"><span class="ln">02</span><code>    x = a<span class="replacement" id="xResult"></span></code></div>
+<div class="code-line output-line"><span class="ln">03</span><code>    y = b<span class="replacement" id="yResult"></span></code></div>
+<div class="code-line output-line"><span class="ln">04</span><code>    <span class="kw">return</span> x + y</code></div>
+<div class="result-footer"><span class="success-icon">✓</span><span id="resultText">Ready to explore better code</span><span class="cost-chip" id="costChip">MUTATION LAB</span></div>
+</div></div>
+</section>
+<section class="feature-strip">
+<article><span class="feature-index">01</span><div><strong>Mutation search</strong><p>Explore alternative code candidates.</p></div><span class="feature-glyph">⌘</span></article>
+<article><span class="feature-index">02</span><div><strong>Validate behavior</strong><p>Keep correctness in the loop.</p></div><span class="feature-glyph">✓</span></article>
+<article><span class="feature-index">03</span><div><strong>Compare results</strong><p>Inspect costs and benchmarks.</p></div><span class="feature-glyph">↗</span></article>
+</section>
+<footer><span>LOCAL WORKSPACE · YOUR CODE STAYS ON YOUR MACHINE</span><span>BUILD <b>01</b> / MUTATION LAB</span></footer>
+</main></body></html>
