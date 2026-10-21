@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mutation Lab · Code Optimizer</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="brand">
+            <span class="mark">M</span>
+            <div>
+                <strong>Mutation Lab</strong>
+                <small>PYTHON + TAC OPTIMIZATION</small>
+            </div>
+        </div>
+        <span class="local">LOCAL WORKSPACE</span>
+    </header>
+
+    <main>
+        <div class="intro">
+            <div>
+                <p class="eyebrow">AUTOMATED MUTATION-BASED COMPILER CODE OPTIMIZATION</p>
+                <h1>Explore better versions of your code.</h1>
+                <p>Generate alternatives. Inspect the evidence. Follow the winning path.</p>
+            </div>
+            <div class="stage">
+                01 Input <span>→</span> 02 Parse <span>→</span> 03 Search <span>→</span> 04 Validate
+            </div>
+        </div>
+
+        <section class="editors">
+            <article class="panel">
+                <div class="panel-head">
+                    <h2>Source code</h2>
+                    <select id="mode" aria-label="Input language">
+                        <option value="python">Python function</option>
+                        <option value="tac">Three-address code</option>
+                    </select>
+                </div>
+
+                <div class="toolbar">
+                    <button id="sample" class="quiet">Load example</button>
+                    <label class="upload">
+                        Upload file
+                        <input type="file" id="file" accept=".py,.tac,.txt">
+                    </label>
+                    <span id="inputBadge">PYTHON</span>
+                </div>
+
+                <textarea id="source" spellcheck="false" aria-label="Source code"></textarea>
+
+                <div id="outputField" hidden>
+                    <label>
+                        Observable TAC outputs
+                        <input id="outputs" placeholder="result, total (blank = non-tN assigned names)">
+                    </label>
+                </div>
+
+                <details>
+                    <summary>Supported language &amp; integer contract</summary>
+                    <p>
+                        One Python function with positional built-in integer inputs, local assignments,
+                        +, −, *, parentheses and a final integer return. TAC accepts one operation per
+                        assignment. No calls, imports, loops, branches, floats or custom objects.
+                        Annotations do not enforce types in exported Python. Parsing never executes
+                        submitted code.
+                    </p>
+                </details>
+            </article>
+
+            <article class="panel">
+                <div class="panel-head">
+                    <h2>Best code found</h2>
+                    <span id="status" class="tag">Ready</span>
+                </div>
+
+                <div class="toolbar">
+                    <button id="download" class="quiet" disabled>Download code</button>
+                    <button id="report" class="quiet" disabled>Export JSON report</button>
+                </div>
+
+                <pre id="optimized" class="code empty">Your selected candidate will appear here.</pre>
+
+                <div class="result-note" id="resultNote">
+                    Output is limited to the supported integer language. “Best” means best found
+                    within your search budget.
+                </div>
+            </article>
+        </section>
+
+        <section class="panel settings">
+            <div class="setting">
+                <label for="rounds">Max rounds</label>
+                <input id="rounds" type="number" min="1" max="20" value="10">
+            </div>
+
+            <div class="setting">
+                <label for="budget">Candidate budget</label>
+                <input id="budget" type="number" min="1" max="800" value="250">
+            </div>
+
+            <div class="setting">
+                <label for="beam">Beam width</label>
+                <input id="beam" type="number" min="1" max="8" value="4">
+            </div>
+
+            <div class="setting">
+                <label for="seed">Test seed</label>
+                <input id="seed" type="number" value="7">
+            </div>
+
+            <button id="run" class="primary">
+                Optimize code <span>↗</span>
+            </button>
+
+            <details class="advanced">
+                <summary>Operators &amp; scoring</summary>
+                <div id="operators"></div>
+
+                <label>
+                    Runtime weight (default 0)
+                    <input id="runtimeWeight" type="number" min="0" max="100" step="0.01" value="0">
+                </label>
+
+                <p>
+                    Score = I + 2A + 1.2T + runtime weight × interpreter microseconds.
+                    I counts SSA assignments; T counts their distinct destinations. Output bindings
+                    are excluded. Runtime weighting is experimental and noisy; repeated runs may
+                    choose different candidates.
+                </p>
+            </details>
+        </section>
+
+        <div id="error" role="alert" hidden></div>
+        <div id="busy" role="status" hidden>Evaluating candidates…</div>
+
+        <section id="results" hidden>
+            <div class="stats" id="stats"></div>
+
+            <nav class="tabs" aria-label="Results">
+                <button class="active" data-tab="overview">Overview</button>
+                <button data-tab="search">Search explorer</button>
+                <button data-tab="validation">Validation</button>
+                <button data-tab="intermediate">Intermediate code</button>
+            </nav>
+
+            <div id="overview" class="tab-content">
+                <div class="two">
+                    <article class="panel">
+                        <h2>Best score over search</h2>
+                        <p class="hint">Lower is better · each point is a distinct candidate evaluation</p>
+                        <div id="costChart"></div>
+                    </article>
+
+                    <article class="panel">
+                        <h2>Structural changes</h2>
+                        <p class="hint">Same SSA representation and output contract</p>
+                        <div id="metricChart"></div>
+                    </article>
+                </div>
+
+                <div class="two">
+                    <article class="panel">
+                        <h2>Interpreter execution time</h2>
+                        <div id="timing"></div>
+                    </article>
+
+                    <article class="panel">
+                        <h2>Baseline comparison</h2>
+                        <p class="hint">
+                            Same operators; work budgets differ. Lower cost does not establish
+                            native speedup.
+                        </p>
+                        <div id="baselines"></div>
+                    </article>
+                </div>
+            </div>
+
+            <div id="search" class="tab-content" hidden>
+                <article class="panel">
+                    <div class="panel-head">
+                        <h2>Winning path</h2>
+                        <p class="hint">Click a step to inspect it</p>
+                    </div>
+                    <div id="path" class="path"></div>
+                </article>
+
+                <div class="two">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <h2>Candidate history</h2>
+                            <input id="filter" placeholder="Filter operator or candidate ID"
+                                aria-label="Filter candidates">
+                        </div>
+
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID / parent</th>
+                                        <th>Round</th>
+                                        <th>Mutation</th>
+                                        <th>Score</th>
+                                        <th>Check</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="candidates"></tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="panel">
+                        <h2 id="candidateTitle">Candidate details</h2>
+                        <p id="candidateReason"></p>
+                        <div id="branches" class="path"></div>
+                        <pre id="candidateCode" class="code"></pre>
+
+                        <h3>Change from parent</h3>
+                        <pre id="diff" class="code"></pre>
+                    </article>
+                </div>
+            </div>
+
+            <div id="validation" class="tab-content" hidden>
+                <div class="two">
+                    <article class="panel">
+                        <h2>Validation evidence</h2>
+                        <div id="validationDetails"></div>
+                    </article>
+
+                    <article class="panel">
+                        <h2>Example execution</h2>
+                        <pre id="example" class="code"></pre>
+
+                        <h3>Counterexamples</h3>
+                        <pre id="counterexamples" class="code"></pre>
+                    </article>
+                </div>
+            </div>
+
+            <div id="intermediate" class="tab-content" hidden>
+                <p class="hint">
+                    Fresh SSA names represent assignment versions. “output” lines below describe
+                    observable bindings; use Download code for executable TAC syntax.
+                </p>
+
+                <div class="two">
+                    <article class="panel">
+                        <h2>Original SSA TAC</h2>
+                        <pre id="originalTAC" class="code"></pre>
+                    </article>
+
+                    <article class="panel">
+                        <h2>Selected SSA TAC</h2>
+                        <pre id="selectedTAC" class="code"></pre>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel benchmark">
+            <div>
+                <p class="eyebrow">EVALUATION</p>
+                <h2>Benchmark the search</h2>
+                <p class="hint">
+                    Synthetic TAC corpus with reassignment, constants, unused instructions and
+                    repeated expressions. Compares static quality with fixed-pass baselines.
+                </p>
+            </div>
+
+            <div class="bench-controls">
+                <label>
+                    Programs
+                    <input id="programs" type="number" min="200" max="500" value="200">
+                </label>
+
+                <button id="benchmark" class="secondary">Run benchmark</button>
+                <button id="benchDownload" class="quiet" disabled>Export JSON</button>
+                <button id="benchCSV" class="quiet" disabled>Export CSV</button>
+            </div>
+
+            <progress id="progress" value="0" max="200" hidden></progress>
+            <p id="benchStatus" role="status">Not run in this session.</p>
+            <div id="benchSummary"></div>
+        </section>
+
+        <footer>
+            Mutation Lab · Standard transformations, transparent search, explicit evidence.
+            <br>
+            Exact identity applies only to the mathematical integer IR when symbolic normalization
+            succeeds. Resource limits and frontend correctness are separate concerns.
+        </footer>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+
+</html>
+
